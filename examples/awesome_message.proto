@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package AwesomePackage;
+ 
+/**
+ * documentation
+ */
+message AwesomeMessage {
+    string str = 1;
+    string str_empty = 2; /// documentation
+    bool   boolean = 3; 
+    /** documetation */
+    bool   boolean_empty = 4; 
+    uint32 uint = 5;
+    uint32 uint_empty = 6;
+
+    repeated string r_str = 7;
+    repeated string r_str_empty = 8;
+    repeated bool   r_boolean = 9; 
+    repeated bool   r_boolean_empty = 10; 
+    repeated uint32 r_uint = 11;
+    repeated uint32 r_uint_empty = 12;
+}

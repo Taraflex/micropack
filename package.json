@@ -1,0 +1,29 @@
+{
+  "name": "@taraflex/micropack",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "publish-library": "tsc -p tsconfig.json && npm publish --registry=https://registry.npmjs.org/ --access=public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Taraflex/micropack.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Taraflex/micropack/issues"
+  },
+  "homepage": "https://github.com/Taraflex/micropack#readme",
+  "dependencies": {
+    "lodash.groupby": "^4.6.0",
+    "protobufjs": "^6.8.8"
+  },
+  "devDependencies": {
+    "@types/node": "^12.12.3",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.4"
+  }
+}
