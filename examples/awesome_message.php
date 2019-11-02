@@ -278,7 +278,7 @@ namespace AwesomePackage {
         /**
          * @param string $data
          */
-        public function __construct($data)
+        public function __construct($data = null)
         {
             if ($data) {
                 $size   = strlen($data);
@@ -343,18 +343,18 @@ namespace AwesomePackage {
         public function dump()
         {
             return AwesomeMessageSerializer::create()
-              ->str($this->str)
-              ->str_empty($this->str_empty)
-              ->boolean($this->boolean)
-              ->boolean_empty($this->boolean_empty)
-              ->uint($this->uint)
-              ->uint_empty($this->uint_empty)
-              ->r_str($this->r_str)
-              ->r_str_empty($this->r_str_empty)
-              ->r_boolean($this->r_boolean)
-              ->r_boolean_empty($this->r_boolean_empty)
-              ->r_uint($this->r_uint)
-              ->r_uint_empty($this->r_uint_empty)->dump();
+                ->str($this->str)
+                ->str_empty($this->str_empty)
+                ->boolean($this->boolean)
+                ->boolean_empty($this->boolean_empty)
+                ->uint($this->uint)
+                ->uint_empty($this->uint_empty)
+                ->r_str($this->r_str)
+                ->r_str_empty($this->r_str_empty)
+                ->r_boolean($this->r_boolean)
+                ->r_boolean_empty($this->r_boolean_empty)
+                ->r_uint($this->r_uint)
+                ->r_uint_empty($this->r_uint_empty)->dump();
         }
 
         /**
@@ -363,6 +363,24 @@ namespace AwesomePackage {
         public function __toString()
         {
             return $this->dump();
+        }
+
+        public function toArray()
+        {
+            return array(
+                'str' => $this->str,
+                'str_empty' => $this->str_empty,
+                'boolean' => $this->boolean,
+                'boolean_empty' => $this->boolean_empty,
+                'uint' => $this->uint,
+                'uint_empty' => $this->uint_empty,
+                'r_str' => $this->r_str,
+                'r_str_empty' => $this->r_str_empty,
+                'r_boolean' => $this->r_boolean,
+                'r_boolean_empty' => $this->r_boolean_empty,
+                'r_uint' => $this->r_uint,
+                'r_uint_empty' => $this->r_uint_empty
+            );
         }
     }
 }

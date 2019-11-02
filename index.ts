@@ -120,7 +120,7 @@ class Parsers {
     }
 }
 
-const RESERVED_FIELDS = new Set(['create', 'dump', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
+const RESERVED_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
 
 for (let proto of protoFiles) {
     for (let _t of collectTypes(parse(readFileSync(proto, 'utf8'), { keepCase: true }).root)) {
@@ -195,7 +195,7 @@ ${fields.map(formatClassField).join('\n')}
         /**
          * @param string $data
          */
-        public function __construct($data)
+        public function __construct($data = null)
         {
             if ($data) {
                 $size   = strlen($data);
@@ -223,7 +223,7 @@ ${Object.values(groupBy(fields, (f: Field) => f.type + '|' + f.repeated)).map((g
         public function dump()
         {
             return ${t.name}Serializer::create()
-${fields.map(f => '->'.padStart(16, ' ') + f.name + '($this->' + f.name + ')').join('\n')}->dump();
+${fields.map(f => '                ->' + f.name + '($this->' + f.name + ')').join('\n')}->dump();
         }
 
         /**
@@ -232,6 +232,13 @@ ${fields.map(f => '->'.padStart(16, ' ') + f.name + '($this->' + f.name + ')').j
         public function __toString()
         {
             return $this->dump();
+        }
+
+        public function toArray()
+        {
+            return array(
+${fields.map(f => `                '${f.name}' => $this->${f.name}`).join(',\n')}
+            );
         }
     }
 }`;
