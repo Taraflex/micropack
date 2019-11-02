@@ -7,7 +7,6 @@
         "sourceMap": false,
         "removeComments": true,
         "strictBindCallApply": true,
-        "declaration": true,
         "lib": [
             "es6"
         ]

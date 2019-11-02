@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { parse, Namespace, Field, Type, ReflectionObject } from 'protobufjs';
 import { readFileSync, writeFileSync } from 'fs';
 import groupBy = require('lodash.groupby');

@@ -2,7 +2,7 @@ node_modules
 *lock.json
 *.lock
 *.log
-vscode
-
+.vscode
+examples
 .gitignore
 index.ts

@@ -1,12 +1,11 @@
 {
   "name": "@taraflex/micropack",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "prepublish": "tsc -p tsconfig.json",
-    "publish-library": "tsc -p tsconfig.json && npm publish --registry=https://registry.npmjs.org/ --access=public"
+    "prepublish": "npx tsc -p tsconfig.json",
+    "publish-library": "npm publish --registry=https://registry.npmjs.org/ --access=public"
   },
   "bin": {
     "micropack": "./index.js"
