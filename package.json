@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublish": "tsc -p tsconfig.json",
     "publish-library": "tsc -p tsconfig.json && npm publish --registry=https://registry.npmjs.org/ --access=public"
+  },
+  "bin": {
+    "micropack": "./index.js"
   },
   "repository": {
     "type": "git",
