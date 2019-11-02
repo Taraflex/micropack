@@ -3,7 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-include 'awesome_message.php';
+require_once 'AwesomeMessageSerializer';
+require_once 'AwesomeMessage';
 
 use awesomepackage\AwesomeMessage;
 use awesomepackage\AwesomeMessageSerializer;

@@ -18,8 +18,9 @@
             "protocol": "inspector",
             "args": [
                 "${workspaceRoot}/index.ts",
-                "${workspaceRoot}/examples/awesome_message.proto",
-                "${workspaceRoot}/examples/awesome_message.php"
+                "${workspaceRoot}/examples/*.proto",
+                "-o",
+                "${workspaceRoot}/examples"
             ],
         }
     ]

@@ -2,7 +2,15 @@
 
 import { parse, Namespace, Field, Type, ReflectionObject } from 'protobufjs';
 import { readFileSync, writeFileSync } from 'fs';
+import { sync as fg } from 'fast-glob';
 import groupBy = require('lodash.groupby');
+import { resolve } from 'path';
+
+const { argv } = require('yargs').option('out', {
+    alias: 'o',
+    type: 'string',
+    description: '*.php output directory'
+});
 
 function* collectTypes(r: { nestedArray: ReflectionObject[] }) {
     for (let e of r.nestedArray) {
@@ -23,11 +31,6 @@ const TypesDefault = {
 function getDef(f: Field) {
     return f.repeated ? 'array()' : TypesDefault[f.type];
 }
-
-let out = '<?php\n';
-
-const outFile = process.argv.find(p => /\.php$/i.test(p));
-const protoFiles = process.argv.filter(p => /\.proto$/i.test(p));
 
 function stringToJsdoc(description: string, pad: string = '') {
     return description && pad + '/**\n' + description.trim().split('\n').map(str => pad + ' * ' + str).join('\n') + `\n${pad} */`;
@@ -122,6 +125,9 @@ class Parsers {
 
 const RESERVED_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
 
+const outDir = argv.o;
+const protoFiles = fg((argv._ as string[]).map(s => s.replace(/\\/g, '/')), { absolute: true });
+
 for (let proto of protoFiles) {
     for (let _t of collectTypes(parse(readFileSync(proto, 'utf8'), { keepCase: true }).root)) {
         const t: Type = _t;
@@ -148,8 +154,9 @@ for (let proto of protoFiles) {
         }`;
         });
 
-        out += `
-namespace ${t.fullName.slice(1, t.fullName.length - 1 - t.name.length).replace(/\./g, '\\')} {
+        const namespace = t.fullName.slice(1, t.fullName.length - 1 - t.name.length).replace(/\./g, '\\');
+
+        const serializerClass = `namespace ${namespace} {
     
     final class ${t.name}Serializer
     {
@@ -184,6 +191,9 @@ namespace ${t.fullName.slice(1, t.fullName.length - 1 - t.name.length).replace(/
 
 ${serializerProps.join('\n')}
     }
+}`;
+
+        const mainClass = `namespace ${namespace} {
 
 ${t.comment ? stringToJsdoc(t.comment, '    ') : ''}
     final class ${t.name}
@@ -242,10 +252,12 @@ ${fields.map(f => `                '${f.name}' => $this->${f.name}`).join(',\n')
         }
     }
 }`;
+        if (outDir) {
+            writeFileSync(resolve(outDir, t.name + 'Serializer.php'), '<?php\n\n' + serializerClass);
+            writeFileSync(resolve(outDir, t.name + '.php'), '<?php\n\n' + mainClass);
+        } else {
+            console.log(serializerClass);
+            console.log(mainClass)
+        }
     }
-}
-if (outFile) {
-    writeFileSync(outFile, out);
-} else {
-    console.log(out);
 }

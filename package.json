@@ -1,6 +1,6 @@
 {
   "name": "@taraflex/micropack",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -21,11 +21,15 @@
   },
   "homepage": "https://github.com/Taraflex/micropack#readme",
   "dependencies": {
+    "fast-glob": "^3.1.0",
     "lodash.groupby": "^4.6.0",
-    "protobufjs": "^6.8.8"
+    "protobufjs": "^6.8.8",
+    "yargs": "^14.2.0"
   },
   "devDependencies": {
+    "@types/lodash.groupby": "^4.6.6",
     "@types/node": "^12.12.3",
+    "@types/yargs": "^13.0.3",
     "ts-node": "^8.4.1",
     "typescript": "^3.6.4"
   }
