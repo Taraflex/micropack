@@ -10,6 +10,17 @@ const { argv } = require('yargs').option('out', {
     alias: 'o',
     type: 'string',
     description: '*.php output directory'
+}).option('namespace', {
+    alias: 'n',
+    type: 'string',
+    description: 'custom namespace'
+}).option('php5', {
+    type: 'boolean',
+    description: 'php5 compability'
+}).option('strip-namespace', {
+    alias: 's',
+    type: 'boolean',
+    description: 'disable wrap code in namespace *{ }'
 });
 
 function* collectTypes(r: { nestedArray: ReflectionObject[] }) {
@@ -36,12 +47,26 @@ function stringToJsdoc(description: string, pad: string = '') {
     return description && pad + '/**\n' + description.trim().split('\n').map(str => pad + ' * ' + str).join('\n') + `\n${pad} */`;
 }
 
+function realType(f: Field) {
+    return f.type.replace('uint32', 'int');
+}
+
 function formatDocType(f: Field) {
-    return f.type.replace('uint32', 'int') + (f.repeated ? '[]' : '');
+    return realType(f) + (f.repeated ? '[]' : '');
 }
 
 function formatClassField(f: Field) {
     return stringToJsdoc(`@var ${formatDocType(f)} ` + (f.comment || ''), '        ') + '\n        public $' + f.name + ' = ' + getDef(f) + ';';
+}
+
+function fnDecl(f: Field) {
+    return `${f.name}(${f.repeated ? 'array $v' : (argv.php5 ? '$v' : realType(f) + ' $v')})`;
+}
+
+function wrapNS(ns: string, code: string) {
+    return argv.s ? code : `namespace ${ns} {
+${code}
+}`;
 }
 
 class Serializers {
@@ -127,6 +152,7 @@ const RESERVED_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse
 
 const outDir = argv.o;
 const protoFiles = fg((argv._ as string[]).map(s => s.replace(/\\/g, '/')), { absolute: true });
+const namespace = (argv.n || '').replace(/\./g, '\\');
 
 for (let proto of protoFiles) {
     for (let _t of collectTypes(parse(readFileSync(proto, 'utf8'), { keepCase: true }).root)) {
@@ -147,17 +173,16 @@ for (let proto of protoFiles) {
 
 @param  ${formatDocType(f)} $v
 @return self`, '        ') + `
-        public function ${f.name}($v)
+        public function ${fnDecl(f)}
         {
             if ($v) {${Serializers[f.type](f)}}
             return $this;
         }`;
         });
 
-        const namespace = t.fullName.slice(1, t.fullName.length - 1 - t.name.length).replace(/\./g, '\\');
+        const ns = namespace || t.fullName.slice(1, t.fullName.length - 1 - t.name.length).replace(/\./g, '\\');
 
-        const serializerClass = `namespace ${namespace} {
-    
+        const serializerClass = wrapNS(ns, `
     final class ${t.name}Serializer
     {
         private $__data = array('');
@@ -190,11 +215,9 @@ for (let proto of protoFiles) {
         }
 
 ${serializerProps.join('\n')}
-    }
-}`;
+    }`);
 
-        const mainClass = `namespace ${namespace} {
-
+        const mainClass = wrapNS(ns, `
 ${t.comment ? stringToJsdoc(t.comment, '    ') : ''}
     final class ${t.name}
     {
@@ -250,8 +273,7 @@ ${fields.map(f => '                ->' + f.name + '($this->' + f.name + ')').joi
 ${fields.map(f => `                '${f.name}' => $this->${f.name}`).join(',\n')}
             );
         }
-    }
-}`;
+    }`);
         if (outDir) {
             writeFileSync(resolve(outDir, t.name + 'Serializer.php'), '<?php\n\n' + serializerClass);
             writeFileSync(resolve(outDir, t.name + '.php'), '<?php\n\n' + mainClass);
