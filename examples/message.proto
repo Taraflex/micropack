@@ -6,18 +6,36 @@ package AwesomePackage;
  * documentation
  */
 message AwesomeMessage {
-    string str = 1;
-    string str_empty = 2; /// documentation
-    bool   boolean = 3; 
+    /**
+    * documentation
+    */
+    enum AwesomeEnum {
+        option allow_alias = true;
+        UNIVERSAL = 0;
+        WEB = 1; /// documentation
+        WEB_ALIAS = 1;
+        IMAGES = 2;
+        LOCAL = 3;
+        NEWS = 4;
+        PRODUCTS = 5;
+        VIDEO = 6;
+    }
+    string str                        = 1;
+    string str_empty                  = 2; /// documentation
+    bool   boolean                    = 3; 
     /** documetation */
-    bool   boolean_empty = 4; 
-    uint32 uint = 5;
-    uint32 uint_empty = 6;
+    bool   boolean_empty              = 4; 
+    uint32 uint                       = 5;
+    uint32 uint_empty                 = 6;
+    AwesomeEnum enum                  = 7;
+    AwesomeEnum enum_empty            = 8;
 
-    repeated string r_str = 7;
-    repeated string r_str_empty = 8;
-    repeated bool   r_boolean = 9; 
-    repeated bool   r_boolean_empty = 10; 
-    repeated uint32 r_uint = 11;
-    repeated uint32 r_uint_empty = 12;
+    repeated string r_str             = 9;
+    repeated string r_str_empty       = 10;
+    repeated bool   r_boolean         = 11; 
+    repeated bool   r_boolean_empty   = 12; 
+    repeated uint32 r_uint            = 13;
+    repeated uint32 r_uint_empty      = 14;
+    repeated AwesomeEnum r_enum       = 15;
+    repeated AwesomeEnum r_enum_empty = 16;
 }

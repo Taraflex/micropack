@@ -118,6 +118,32 @@ namespace AwesomePackage {
             return $this;
         }
         /**
+         * @param  int $v
+         * @return self
+         */
+        public function enum(int $v)
+        {
+            if ($v) {
+                $this->__data[0] .= 'CV';
+                $this->__data[] = 7;
+                $this->__data[] = $v;
+            }
+            return $this;
+        }
+        /**
+         * @param  int $v
+         * @return self
+         */
+        public function enum_empty(int $v)
+        {
+            if ($v) {
+                $this->__data[0] .= 'CV';
+                $this->__data[] = 8;
+                $this->__data[] = $v;
+            }
+            return $this;
+        }
+        /**
          * @param  string[] $v
          * @return self
          */
@@ -126,7 +152,7 @@ namespace AwesomePackage {
             if ($v) {
                 $c = count($v);
                 $this->__data[0] .= 'CV';
-                $this->__data[] = 7;
+                $this->__data[] = 9;
                 $this->__data[] = $c;
                 foreach ($v as $str) {
                     $size = strlen($str);
@@ -146,7 +172,7 @@ namespace AwesomePackage {
             if ($v) {
                 $c = count($v);
                 $this->__data[0] .= 'CV';
-                $this->__data[] = 8;
+                $this->__data[] = 10;
                 $this->__data[] = $c;
                 foreach ($v as $str) {
                     $size = strlen($str);
@@ -166,7 +192,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVC' . $size;
-                $this->__data[] = 9;
+                $this->__data[] = 11;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -181,7 +207,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVC' . $size;
-                $this->__data[] = 10;
+                $this->__data[] = 12;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -196,7 +222,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVV' . $size;
-                $this->__data[] = 11;
+                $this->__data[] = 13;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -211,7 +237,37 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVV' . $size;
-                $this->__data[] = 12;
+                $this->__data[] = 14;
+                $this->__data[] = $size;
+                $this->__data   = array_merge($this->__data, $v);
+            }
+            return $this;
+        }
+        /**
+         * @param  int[] $v
+         * @return self
+         */
+        public function r_enum(array $v)
+        {
+            if ($v) {
+                $size = count($v);
+                $this->__data[0] .= 'CVV' . $size;
+                $this->__data[] = 15;
+                $this->__data[] = $size;
+                $this->__data   = array_merge($this->__data, $v);
+            }
+            return $this;
+        }
+        /**
+         * @param  int[] $v
+         * @return self
+         */
+        public function r_enum_empty(array $v)
+        {
+            if ($v) {
+                $size = count($v);
+                $this->__data[0] .= 'CVV' . $size;
+                $this->__data[] = 16;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }

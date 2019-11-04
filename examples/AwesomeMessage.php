@@ -32,6 +32,14 @@ namespace AwesomePackage {
          */
         public $uint_empty = 0;
         /**
+         * @var int
+         */
+        public $enum = 0;
+        /**
+         * @var int
+         */
+        public $enum_empty = 0;
+        /**
          * @var string[]
          */
         public $r_str = array();
@@ -55,8 +63,16 @@ namespace AwesomePackage {
          * @var int[]
          */
         public $r_uint_empty = array();
+        /**
+         * @var int[]
+         */
+        public $r_enum = array();
+        /**
+         * @var int[]
+         */
+        public $r_enum_empty = array();
 
-        private $__indices = array(1 => 'str', 2 => 'str_empty', 3 => 'boolean', 4 => 'boolean_empty', 5 => 'uint', 6 => 'uint_empty', 7 => 'r_str', 8 => 'r_str_empty', 9 => 'r_boolean', 10 => 'r_boolean_empty', 11 => 'r_uint', 12 => 'r_uint_empty');
+        private $__indices = array(1 => 'str', 2 => 'str_empty', 3 => 'boolean', 4 => 'boolean_empty', 5 => 'uint', 6 => 'uint_empty', 7 => 'enum', 8 => 'enum_empty', 9 => 'r_str', 10 => 'r_str_empty', 11 => 'r_boolean', 12 => 'r_boolean_empty', 13 => 'r_uint', 14 => 'r_uint_empty', 15 => 'r_enum', 16 => 'r_enum_empty');
 
         /**
          * @param string $data
@@ -89,12 +105,12 @@ namespace AwesomePackage {
                     $this->{$field} = true;
                     return $offset;
 
-                case 5/*uint*/: case 6/*uint_empty*/:
+                case 5/*uint*/: case 6/*uint_empty*/: case 7/*enum*/: case 8/*enum_empty*/:
                     // uint32
                     $this->{$field} = ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24);
                     return $offset;
 
-                case 7/*r_str*/: case 8/*r_str_empty*/:
+                case 9/*r_str*/: case 10/*r_str_empty*/:
                     // repeated string
                     $count = ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24);
                     while (--$count >= 0) {
@@ -104,14 +120,14 @@ namespace AwesomePackage {
                     }
                     return $offset;
 
-                case 9/*r_boolean*/: case 10/*r_boolean_empty*/:
+                case 11/*r_boolean*/: case 12/*r_boolean_empty*/:
                     // repeated bool
                     $size = ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24);
                     $this->{$field} = unpack('C' . $size, substr($data, $offset, $size));
                     $offset += $size;
                     return $offset;
 
-                case 11/*r_uint*/: case 12/*r_uint_empty*/:
+                case 13/*r_uint*/: case 14/*r_uint_empty*/: case 15/*r_enum*/: case 16/*r_enum_empty*/:
                     // repeated uint32
                     $size = ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24);
                     $this->{$field} = unpack('V' . $size, substr($data, $offset, $size * 4));
@@ -132,12 +148,16 @@ namespace AwesomePackage {
                 ->boolean_empty($this->boolean_empty)
                 ->uint($this->uint)
                 ->uint_empty($this->uint_empty)
+                ->enum($this->enum)
+                ->enum_empty($this->enum_empty)
                 ->r_str($this->r_str)
                 ->r_str_empty($this->r_str_empty)
                 ->r_boolean($this->r_boolean)
                 ->r_boolean_empty($this->r_boolean_empty)
                 ->r_uint($this->r_uint)
-                ->r_uint_empty($this->r_uint_empty)->dump();
+                ->r_uint_empty($this->r_uint_empty)
+                ->r_enum($this->r_enum)
+                ->r_enum_empty($this->r_enum_empty)->dump();
         }
 
         /**
@@ -157,12 +177,16 @@ namespace AwesomePackage {
                 'boolean_empty' => $this->boolean_empty,
                 'uint' => $this->uint,
                 'uint_empty' => $this->uint_empty,
+                'enum' => $this->enum,
+                'enum_empty' => $this->enum_empty,
                 'r_str' => $this->r_str,
                 'r_str_empty' => $this->r_str_empty,
                 'r_boolean' => $this->r_boolean,
                 'r_boolean_empty' => $this->r_boolean_empty,
                 'r_uint' => $this->r_uint,
-                'r_uint_empty' => $this->r_uint_empty
+                'r_uint_empty' => $this->r_uint_empty,
+                'r_enum' => $this->r_enum,
+                'r_enum_empty' => $this->r_enum_empty
             );
         }
     }

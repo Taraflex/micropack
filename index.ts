@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { parse, Namespace, Field, Type, ReflectionObject } from 'protobufjs';
+import { parse, Namespace, Enum, Field, Type, ReflectionObject } from 'protobufjs';
 import { readFileSync, writeFileSync } from 'fs';
 import { sync as fg } from 'fast-glob';
 import groupBy = require('lodash.groupby');
@@ -21,26 +21,32 @@ const { argv } = require('yargs').option('out', {
     alias: 's',
     type: 'boolean',
     description: 'disable wrap code in namespace *{ }'
+}).option('only-serializers', {
+    type: 'boolean',
+    description: 'generate serializers only'
 });
 
 function* collectTypes(r: { nestedArray: ReflectionObject[] }) {
     for (let e of r.nestedArray) {
-        if (e instanceof Type) {
+        if (e instanceof Type || e instanceof Enum) {
             yield e;
-        } else if (e instanceof Namespace) {
+        }
+        //@ts-ignore
+        if (e.nestedArray) {
+            //@ts-ignore
             yield* collectTypes(e);
         }
     }
 }
 
-const TypesDefault = {
+const TypesDefault = Object.assign(Object.create(null), {
     bool: 'false',
     uint32: '0',
     string: "''",
-}
+})
 
 function getDef(f: Field) {
-    return f.repeated ? 'array()' : TypesDefault[f.type];
+    return f.repeated ? 'array()' : TypesDefault[f.type] || '0';
 }
 
 function stringToJsdoc(description: string, pad: string = '') {
@@ -48,7 +54,7 @@ function stringToJsdoc(description: string, pad: string = '') {
 }
 
 function realType(f: Field) {
-    return f.type.replace('uint32', 'int');
+    return TypesDefault[f.type] ? f.type.replace('uint32', 'int') : 'int';
 }
 
 function formatDocType(f: Field) {
@@ -61,12 +67,6 @@ function formatClassField(f: Field) {
 
 function fnDecl(f: Field) {
     return `${f.name}(${f.repeated ? 'array $v' : (argv.php5 ? '$v' : realType(f) + ' $v')})`;
-}
-
-function wrapNS(ns: string, code: string) {
-    return argv.s ? code : `namespace ${ns} {
-${code}
-}`;
 }
 
 class Serializers {
@@ -148,28 +148,105 @@ class Parsers {
     }
 }
 
-const RESERVED_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
+const RESERVED_SERIALIZER_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
+const RESERVED_ENUM_FIELDS = new Set(['nameOf', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
+
+function isValidEnumField(e: Enum, f: string) {
+    if (RESERVED_ENUM_FIELDS.has(f)) {
+        throw new Error(`Field: '${e.fullName}.${f}' has reserved name`);
+    }
+}
 
 const outDir = argv.o;
 const protoFiles = fg((argv._ as string[]).map(s => s.replace(/\\/g, '/')), { absolute: true });
 const namespace = (argv.n || '').replace(/\./g, '\\');
 
-for (let proto of protoFiles) {
-    for (let _t of collectTypes(parse(readFileSync(proto, 'utf8'), { keepCase: true }).root)) {
-        const t: Type = _t;
-        const fields: Field[] = t.fieldsArray;
+function* pNs(t: ReflectionObject) {
+    if (t) {
+        if (t.constructor === Namespace) {
+            yield t.name;
+        }
+        yield* pNs(t.parent)
+    }
+}
 
-        const serializerProps = fields.map(f => {
-            if (!f.optional) {
-                throw new Error(`Field: '${f.fullName}' must be optional`);
+function trNs(t: Type | Enum) {
+    return Array.from(pNs(t.parent)).filter(Boolean).join('\\');
+}
+
+function trName(t: Type | Enum) {
+    return trNs(t) + '\\' + t.name;
+}
+
+function wrapNS(t: Type | Enum, code: string) {
+    return argv.s ? code : `namespace ${namespace || trNs(t)} {
+${code}
+}`;
+}
+
+const types: Record<string, Type> = Object.create(null);
+const enums: Record<string, Enum> = Object.create(null);
+
+for (let proto of protoFiles) {
+    let t: Type | Enum;
+    for (t of collectTypes(parse(readFileSync(proto, 'utf8'), { keepCase: true }).root)) {
+        if (t instanceof Enum) {
+            enums[trName(t)] = t;
+        } else if (t instanceof Type) {
+            types[trName(t)] = t;
+        }
+    }
+}
+
+if (!argv.onlySerializers) {
+    for (let fullName in enums) {
+        const t = enums[fullName];
+        const enumClass = wrapNS(t, `
+${t.comment ? stringToJsdoc(t.comment, '    ') : ''}
+    final class ${t.name}
+    {
+${Object.keys(t.values).reduce((acc, k) => (isValidEnumField(t, k), acc.concat(stringToJsdoc(t.comments[k], '        '), `        const ${k} = ` + t.values[k] + ';')), []).filter(Boolean).join('\n')}
+
+        /**
+         * @param  int $v
+         * @return string
+         */
+        public function ${fnDecl(new Field('nameOf', 0, 'uint32'))}
+        {
+            switch ($v) {
+${Object.keys(t.values).map(k => `                case ${t.values[k]}: return '${k}';`).join('\n')}
             }
-            if (RESERVED_FIELDS.has(f.name)) {
-                throw new Error(`Field: '${f.fullName}' has reserved name`);
-            }
-            if (!(f.type in Serializers)) {
+            return '';
+        }
+    }`);
+        if (outDir) {
+            writeFileSync(resolve(outDir, t.name + '.php'), '<?php\n\n' + enumClass);
+        } else {
+            console.log(enumClass);
+        }
+    }
+}
+
+for (let fullName in types) {
+    const t = types[fullName];
+    const fields = t.fieldsArray;
+    const ns = trNs(t);
+
+    const serializerProps = fields.map(f => {
+        if (!f.optional) {
+            throw new Error(`Field: '${f.fullName}' must be optional`);
+        }
+        if (RESERVED_SERIALIZER_FIELDS.has(f.name)) {
+            throw new Error(`Field: '${f.fullName}' has reserved name`);
+        }
+        if (!(f.type in Serializers)) {
+            if (ns + '\\' + f.type in enums) {
+                f.type = 'uint32';
+            } else {
                 throw new Error(`Unsupported type ${f.type} on ${f.fullName}`);
             }
-            return stringToJsdoc((f.comment || '') + `
+        }
+        return stringToJsdoc((f.comment || '') + `
 
 @param  ${formatDocType(f)} $v
 @return self`, '        ') + `
@@ -178,11 +255,9 @@ for (let proto of protoFiles) {
             if ($v) {${Serializers[f.type](f)}}
             return $this;
         }`;
-        });
+    });
 
-        const ns = namespace || t.fullName.slice(1, t.fullName.length - 1 - t.name.length).replace(/\./g, '\\');
-
-        const serializerClass = wrapNS(ns, `
+    const serializerClass = wrapNS(t, `
     final class ${t.name}Serializer
     {
         private $__data = array('');
@@ -217,7 +292,7 @@ for (let proto of protoFiles) {
 ${serializerProps.join('\n')}
     }`);
 
-        const mainClass = wrapNS(ns, `
+    const mainClass = wrapNS(t, `
 ${t.comment ? stringToJsdoc(t.comment, '    ') : ''}
     final class ${t.name}
     {
@@ -274,11 +349,14 @@ ${fields.map(f => `                '${f.name}' => $this->${f.name}`).join(',\n')
             );
         }
     }`);
-        if (outDir) {
-            writeFileSync(resolve(outDir, t.name + 'Serializer.php'), '<?php\n\n' + serializerClass);
+    if (outDir) {
+        writeFileSync(resolve(outDir, t.name + 'Serializer.php'), '<?php\n\n' + serializerClass);
+        if (!argv.onlySerializers) {
             writeFileSync(resolve(outDir, t.name + '.php'), '<?php\n\n' + mainClass);
-        } else {
-            console.log(serializerClass);
+        }
+    } else {
+        console.log(serializerClass);
+        if (!argv.onlySerializers) {
             console.log(mainClass)
         }
     }
