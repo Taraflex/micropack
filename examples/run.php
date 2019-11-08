@@ -12,6 +12,8 @@ use awesomepackage\AwesomeMessage;
 use awesomepackage\AwesomeMessageSerializer;
 
 $s = AwesomeMessageSerializer::create()
+    ->bt('bytes')
+    ->bt_empty('')
     ->str('hello world')
     ->str_empty('')
     ->boolean(true)
@@ -28,6 +30,8 @@ $s = AwesomeMessageSerializer::create()
     ->r_str_empty(array())
     ->r_enum(array(AwesomeEnum::WEB_ALIAS))
     ->r_enum_empty(array())
+    ->r_bt(explode(' ', 'В лесу родилась ёлочка, В лесу она росла. Зимой и летом стройная, Зелёная была.'))
+    ->r_bt_empty(array())
     ->dump();
 
 var_dump($s);

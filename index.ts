@@ -43,6 +43,7 @@ const TypesDefault = Object.assign(Object.create(null), {
     bool: 'false',
     uint32: '0',
     string: "''",
+    bytes: "''"
 })
 
 function getDef(f: Field) {
@@ -54,7 +55,7 @@ function stringToJsdoc(description: string, pad: string = '') {
 }
 
 function realType(f: Field) {
-    return TypesDefault[f.type] ? f.type.replace('uint32', 'int') : 'int';
+    return TypesDefault[f.type] ? f.type.replace('uint32', 'int').replace('bytes', 'string') : 'int';
 }
 
 function formatDocType(f: Field) {
@@ -115,6 +116,9 @@ class Serializers {
                 $this->__data[] = $v;
             `;
     }
+    static bytes(f: Field) {
+        return Serializers.string(f);
+    }
 }
 
 const unpackUInt = `ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24)`;
@@ -145,6 +149,9 @@ class Parsers {
                     $size = ${unpackUInt};
                     list(, $this->{$field}) = unpack('a' . $size, substr($data, $offset, $size));
                     $offset += $size;`;
+    }
+    static bytes(repeated: boolean) {
+        return Parsers.string(repeated);
     }
 }
 

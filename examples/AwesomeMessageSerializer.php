@@ -144,6 +144,36 @@ namespace AwesomePackage {
             return $this;
         }
         /**
+         * @param  string $v
+         * @return self
+         */
+        public function bt(string $v)
+        {
+            if ($v) {
+                $size = strlen($v);
+                $this->__data[0] .= 'CVa' . $size;
+                $this->__data[] = 9;
+                $this->__data[] = $size;
+                $this->__data[] = $v;
+            }
+            return $this;
+        }
+        /**
+         * @param  string $v
+         * @return self
+         */
+        public function bt_empty(string $v)
+        {
+            if ($v) {
+                $size = strlen($v);
+                $this->__data[0] .= 'CVa' . $size;
+                $this->__data[] = 10;
+                $this->__data[] = $size;
+                $this->__data[] = $v;
+            }
+            return $this;
+        }
+        /**
          * @param  string[] $v
          * @return self
          */
@@ -152,7 +182,7 @@ namespace AwesomePackage {
             if ($v) {
                 $c = count($v);
                 $this->__data[0] .= 'CV';
-                $this->__data[] = 9;
+                $this->__data[] = 11;
                 $this->__data[] = $c;
                 foreach ($v as $str) {
                     $size = strlen($str);
@@ -172,7 +202,7 @@ namespace AwesomePackage {
             if ($v) {
                 $c = count($v);
                 $this->__data[0] .= 'CV';
-                $this->__data[] = 10;
+                $this->__data[] = 12;
                 $this->__data[] = $c;
                 foreach ($v as $str) {
                     $size = strlen($str);
@@ -192,7 +222,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVC' . $size;
-                $this->__data[] = 11;
+                $this->__data[] = 13;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -207,7 +237,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVC' . $size;
-                $this->__data[] = 12;
+                $this->__data[] = 14;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -222,7 +252,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVV' . $size;
-                $this->__data[] = 13;
+                $this->__data[] = 15;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -237,7 +267,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVV' . $size;
-                $this->__data[] = 14;
+                $this->__data[] = 16;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -252,7 +282,7 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVV' . $size;
-                $this->__data[] = 15;
+                $this->__data[] = 17;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
             }
@@ -267,9 +297,49 @@ namespace AwesomePackage {
             if ($v) {
                 $size = count($v);
                 $this->__data[0] .= 'CVV' . $size;
-                $this->__data[] = 16;
+                $this->__data[] = 18;
                 $this->__data[] = $size;
                 $this->__data   = array_merge($this->__data, $v);
+            }
+            return $this;
+        }
+        /**
+         * @param  string[] $v
+         * @return self
+         */
+        public function r_bt(array $v)
+        {
+            if ($v) {
+                $c = count($v);
+                $this->__data[0] .= 'CV';
+                $this->__data[] = 19;
+                $this->__data[] = $c;
+                foreach ($v as $str) {
+                    $size = strlen($str);
+                    $this->__data[0] .= 'Va' . $size;
+                    $this->__data[] = $size;
+                    $this->__data[] = $str;
+                }
+            }
+            return $this;
+        }
+        /**
+         * @param  string[] $v
+         * @return self
+         */
+        public function r_bt_empty(array $v)
+        {
+            if ($v) {
+                $c = count($v);
+                $this->__data[0] .= 'CV';
+                $this->__data[] = 20;
+                $this->__data[] = $c;
+                foreach ($v as $str) {
+                    $size = strlen($str);
+                    $this->__data[0] .= 'Va' . $size;
+                    $this->__data[] = $size;
+                    $this->__data[] = $str;
+                }
             }
             return $this;
         }

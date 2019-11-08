@@ -29,13 +29,17 @@ message AwesomeMessage {
     uint32 uint_empty                 = 6;
     AwesomeEnum enum                  = 7;
     AwesomeEnum enum_empty            = 8;
+    bytes bt                          = 9;
+    bytes bt_empty                    = 10;
 
-    repeated string r_str             = 9;
-    repeated string r_str_empty       = 10;
-    repeated bool   r_boolean         = 11; 
-    repeated bool   r_boolean_empty   = 12; 
-    repeated uint32 r_uint            = 13;
-    repeated uint32 r_uint_empty      = 14;
-    repeated AwesomeEnum r_enum       = 15;
-    repeated AwesomeEnum r_enum_empty = 16;
+    repeated string r_str             = 11;
+    repeated string r_str_empty       = 12;
+    repeated bool   r_boolean         = 13; 
+    repeated bool   r_boolean_empty   = 14; 
+    repeated uint32 r_uint            = 15;
+    repeated uint32 r_uint_empty      = 16;
+    repeated AwesomeEnum r_enum       = 17;
+    repeated AwesomeEnum r_enum_empty = 18;
+    repeated string r_bt              = 19;
+    repeated string r_bt_empty        = 20;
 }
