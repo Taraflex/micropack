@@ -1,6 +1,6 @@
 {
   "name": "@taraflex/micropack",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -28,9 +28,9 @@
   },
   "devDependencies": {
     "@types/lodash.groupby": "^4.6.6",
-    "@types/node": "^12.12.3",
+    "@types/node": "^12.12.6",
     "@types/yargs": "^13.0.3",
     "ts-node": "^8.4.1",
-    "typescript": "^3.6.4"
+    "typescript": "^3.7.2"
   }
 }

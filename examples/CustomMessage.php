@@ -14,15 +14,16 @@ namespace AwesomePackage {
 
         /**
          * @param string $data
+         * @param int    $offset
+         * @param int    $size
          */
-        public function __construct(string $data = null)
+        public function __construct(string $data = null, int $offset = 0, int $size = 2147483647)
         {
             if ($data) {
-                $size   = strlen($data);
-                $offset = 0;
-                do {
-                    $offset = $this->__parse($data, $offset + 1, ord($data[$offset]));
-                } while ($offset < $size);
+                $end = $offset + $size;
+                while ($offset < $end && $id = ord($data[$offset])) {
+                    $offset = $this->__parse($data, $offset + 1, $id);
+                }
             }
         }
 
@@ -34,7 +35,7 @@ namespace AwesomePackage {
                 case 1/*test*/:
                     // string
                     $size = ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24);
-                    list(, $this->{$field}) = unpack('a' . $size, substr($data, $offset, $size));
+                    $this->{$field} = substr($data, $offset, $size);
                     $offset += $size;
                     return $offset;
             }
@@ -45,7 +46,7 @@ namespace AwesomePackage {
          */
         public function dump()
         {
-            return CustomMessageSerializer::create()
+            return \AwesomePackage\CustomMessageSerializer::create()
                 ->test($this->test)->dump();
         }
 

@@ -43,4 +43,4 @@ $s = AwesomeMessageSerializer::create()
     ->dump();
 
 var_dump($s);
-var_dump(new AwesomeMessage($s));
+var_dump(new AwesomeMessage('padding ' . $s, 8));

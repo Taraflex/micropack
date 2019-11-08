@@ -58,19 +58,19 @@ function stringToJsdoc(description: string, pad: string = '') {
     return description && pad + '/**\n' + description.trim().split('\n').map(str => pad + ' * ' + str).join('\n') + `\n${pad} */`;
 }
 
-function formatCustomType(f: Field, stripNs = argv.s) {
+function formatCustomType(name: string, stripNs = argv.s) {
     if (stripNs) {
-        const a = f.type.split('\\');
+        const a = name.split('\\');
         return a[a.length - 1];
     }
     if (namespace) {
-        return `\\${namespace}\\${formatCustomType(f, true)}`;
+        return `\\${namespace}\\${formatCustomType(name, true)}`;
     }
-    return f.type;
+    return name;
 }
 
 function realType(f: Field) {
-    return TypesDefault[f.type] ? f.type.replace('uint32', 'int').replace('bytes', 'string') : (f.type in types ? formatCustomType(f) : 'int');
+    return TypesDefault[f.type] ? f.type.replace('uint32', 'int').replace('bytes', 'string') : (f.type in types ? formatCustomType(f.type) : 'int');
 }
 
 function formatDocType(f: Field) {
@@ -179,11 +179,11 @@ class Parsers {
                     $count = ${unpackUInt};
                     while (--$count >= 0) {
                         $size = ${unpackUInt};
-                        list(, $this->{$field}[]) = unpack('a' . $size, substr($data, $offset, $size));
+                        $this->{$field}[] = substr($data, $offset, $size);
                         $offset += $size;
                     }` : `
                     $size = ${unpackUInt};
-                    list(, $this->{$field}) = unpack('a' . $size, substr($data, $offset, $size));
+                    $this->{$field} = substr($data, $offset, $size);
                     $offset += $size;`;
     }
     static bytes(repeated: boolean) {
@@ -196,13 +196,11 @@ function customParser(repeated: boolean) {
                     $count = ${unpackUInt};
                     while (--$count >= 0) {
                         $size = ${unpackUInt};
-                        list(, $bytes) = unpack('a' . $size, substr($data, $offset, $size));
-                        $this->{$field}[] = new ${this}($bytes);
+                        $this->{$field}[] = new ${this}($data, $offset, $size);
                         $offset += $size;
                     }` : `
                     $size = ${unpackUInt};
-                    list(, $bytes) = unpack('a' . $size, substr($data, $offset, $size));
-                    $this->{$field} = new ${this}($bytes);
+                    $this->{$field} = new ${this}($data, $offset, $size);
                     $offset += $size;`;
 }
 
@@ -226,11 +224,11 @@ function* pNs(t: ReflectionObject) {
 
 function trNs(t: Type | Enum) {
     let n = Array.from(pNs(t.parent)).filter(Boolean).join('\\');
-    return n ? `\\${n}\\` : '';
+    return n ? `\\${n}` : '';
 }
 
 function trName(t: Type | Enum) {
-    return trNs(t) + t.name;
+    return trNs(t) + '\\' + t.name;
 }
 
 function trimSlashes(s: string) {
@@ -306,7 +304,7 @@ for (let fullName in types) {
         }
         if (!(f.type in TypesDefault)) {
             //todo better type resolve
-            f.type = ns + f.type;
+            f.type = ns + '\\' + f.type;
         }
         if (!(f.type in Serializers)) {
             throw new Error(`Unsupported type ${f.type} on ${f.fullName}`);
@@ -367,15 +365,16 @@ ${fields.map(formatClassField).join('\n')}
 
         /**
          * @param string $data
+         * @param int    $offset
+         * @param int    $size
          */
-        public function __construct(${argv.php5 ? '$data = null' : 'string $data = null'})
+        public function __construct(${argv.php5 ? '$data = null' : 'string $data = null'}, ${argv.php5 ? '' : 'int '}$offset = 0, ${argv.php5 ? '' : 'int '}$size = 2147483647)
         {
             if ($data) {
-                $size   = strlen($data);
-                $offset = 0;
-                do {
-                    $offset = $this->__parse($data, $offset + 1, ord($data[$offset]));
-                } while ($offset < $size);
+                $end = $offset + $size;
+                while ($offset < $end && $id = ord($data[$offset])) {
+                    $offset = $this->__parse($data, $offset + 1, $id);
+                }
             }
         }
 
@@ -395,7 +394,7 @@ ${Object.values(groupBy(fields, (f: Field) => f.type + '|' + f.repeated)).map((g
          */
         public function dump()
         {
-            return ${t.name}Serializer::create()
+            return ${formatCustomType(trName(t))}Serializer::create()
 ${fields.map(f => '                ->' + f.name + '($this->' + f.name + ')').join('\n')}->dump();
         }
 
