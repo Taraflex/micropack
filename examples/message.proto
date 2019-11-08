@@ -6,6 +6,9 @@ package AwesomePackage;
  * documentation
  */
 message AwesomeMessage {
+    message CustomMessage{
+        string test = 1;
+    }
     /**
     * documentation
     */
@@ -42,4 +45,9 @@ message AwesomeMessage {
     repeated AwesomeEnum r_enum_empty = 18;
     repeated string r_bt              = 19;
     repeated string r_bt_empty        = 20;
+
+    CustomMessage custom                  = 21;
+    CustomMessage custom_empty            = 22;
+    repeated CustomMessage r_custom       = 23;
+    repeated CustomMessage r_custom_empty = 24;
 }

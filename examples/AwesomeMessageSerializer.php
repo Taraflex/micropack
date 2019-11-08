@@ -343,5 +343,79 @@ namespace AwesomePackage {
             }
             return $this;
         }
+        /**
+         * @param  \AwesomePackage\CustomMessage $v
+         * @return self
+         */
+        public function custom(\AwesomePackage\CustomMessage $v = null)
+        {
+            if ($v) {
+                $v = (string) $v;
+                $size = strlen($v);
+                $this->__data[0] .= 'CVa' . $size;
+                $this->__data[] = 21;
+                $this->__data[] = $size;
+                $this->__data[] = $v;
+            }
+            return $this;
+        }
+        /**
+         * @param  \AwesomePackage\CustomMessage $v
+         * @return self
+         */
+        public function custom_empty(\AwesomePackage\CustomMessage $v = null)
+        {
+            if ($v) {
+                $v = (string) $v;
+                $size = strlen($v);
+                $this->__data[0] .= 'CVa' . $size;
+                $this->__data[] = 22;
+                $this->__data[] = $size;
+                $this->__data[] = $v;
+            }
+            return $this;
+        }
+        /**
+         * @param  \AwesomePackage\CustomMessage[] $v
+         * @return self
+         */
+        public function r_custom(array $v)
+        {
+            if ($v) {
+                $c = count($v);
+                $this->__data[0] .= 'CV';
+                $this->__data[] = 23;
+                $this->__data[] = $c;
+                foreach ($v as $str) {
+                    $str  = (string) $str;
+                    $size = strlen($str);
+                    $this->__data[0] .= 'Va' . $size;
+                    $this->__data[] = $size;
+                    $this->__data[] = $str;
+                }
+            }
+            return $this;
+        }
+        /**
+         * @param  \AwesomePackage\CustomMessage[] $v
+         * @return self
+         */
+        public function r_custom_empty(array $v)
+        {
+            if ($v) {
+                $c = count($v);
+                $this->__data[0] .= 'CV';
+                $this->__data[] = 24;
+                $this->__data[] = $c;
+                foreach ($v as $str) {
+                    $str  = (string) $str;
+                    $size = strlen($str);
+                    $this->__data[0] .= 'Va' . $size;
+                    $this->__data[] = $size;
+                    $this->__data[] = $str;
+                }
+            }
+            return $this;
+        }
     }
 }

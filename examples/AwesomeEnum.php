@@ -23,7 +23,7 @@ namespace AwesomePackage {
          * @param  int $v
          * @return string
          */
-        public function nameOf(int $v)
+        public static function nameOf(int $v)
         {
             switch ($v) {
                 case 0: return 'UNIVERSAL';

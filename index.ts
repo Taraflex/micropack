@@ -26,6 +26,10 @@ const { argv } = require('yargs').option('out', {
     description: 'generate serializers only'
 });
 
+const outDir: string = argv.o;
+const protoFiles: string[] = fg((argv._ as string[]).map(s => s.replace(/\\/g, '/')), { absolute: true });
+const namespace: string = trimSlashes((argv.n || '').replace(/\./g, '\\'));
+
 function* collectTypes(r: { nestedArray: ReflectionObject[] }) {
     for (let e of r.nestedArray) {
         if (e instanceof Type || e instanceof Enum) {
@@ -47,15 +51,26 @@ const TypesDefault = Object.assign(Object.create(null), {
 })
 
 function getDef(f: Field) {
-    return f.repeated ? 'array()' : TypesDefault[f.type] || '0';
+    return f.repeated ? 'array()' : TypesDefault[f.type] || (f.type in types ? 'null' : '0');
 }
 
 function stringToJsdoc(description: string, pad: string = '') {
     return description && pad + '/**\n' + description.trim().split('\n').map(str => pad + ' * ' + str).join('\n') + `\n${pad} */`;
 }
 
+function formatCustomType(f: Field, stripNs = argv.s) {
+    if (stripNs) {
+        const a = f.type.split('\\');
+        return a[a.length - 1];
+    }
+    if (namespace) {
+        return `\\${namespace}\\${formatCustomType(f, true)}`;
+    }
+    return f.type;
+}
+
 function realType(f: Field) {
-    return TypesDefault[f.type] ? f.type.replace('uint32', 'int').replace('bytes', 'string') : 'int';
+    return TypesDefault[f.type] ? f.type.replace('uint32', 'int').replace('bytes', 'string') : (f.type in types ? formatCustomType(f) : 'int');
 }
 
 function formatDocType(f: Field) {
@@ -67,7 +82,11 @@ function formatClassField(f: Field) {
 }
 
 function fnDecl(f: Field) {
-    return `${f.name}(${f.repeated ? 'array $v' : (argv.php5 ? '$v' : realType(f) + ' $v')})`;
+    let param = f.repeated ? 'array $v' : (argv.php5 ? '$v' : realType(f) + ' $v');
+    if (!f.repeated && (f.type in types)) {
+        param += ' = null';
+    }
+    return `${f.name}(${param})`;
 }
 
 class Serializers {
@@ -121,6 +140,23 @@ class Serializers {
     }
 }
 
+function customSerializer(f: Field) {
+    return f.repeated ? `
+                $c = count($v);
+                $this->__data[0] .= 'CV';
+                $this->__data[] = ${f.id};
+                $this->__data[] = $c;
+                foreach ($v as $str) {
+                    $str  = (string) $str;
+                    $size = strlen($str);
+                    $this->__data[0] .= 'Va' . $size;
+                    $this->__data[] = $size;
+                    $this->__data[] = $str;
+                }
+            ` : `
+                $v = (string) $v;` + Serializers.string(f);
+}
+
 const unpackUInt = `ord($data[$offset]) | (ord($data[++$offset]) << 8) | (ord($data[++$offset]) << 16) | (ord($data[($offset += 2) - 1]) << 24)`;
 
 class Parsers {
@@ -155,6 +191,21 @@ class Parsers {
     }
 }
 
+function customParser(repeated: boolean) {
+    return repeated ? `
+                    $count = ${unpackUInt};
+                    while (--$count >= 0) {
+                        $size = ${unpackUInt};
+                        list(, $bytes) = unpack('a' . $size, substr($data, $offset, $size));
+                        $this->{$field}[] = new ${this}($bytes);
+                        $offset += $size;
+                    }` : `
+                    $size = ${unpackUInt};
+                    list(, $bytes) = unpack('a' . $size, substr($data, $offset, $size));
+                    $this->{$field} = new ${this}($bytes);
+                    $offset += $size;`;
+}
+
 const RESERVED_SERIALIZER_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
 const RESERVED_ENUM_FIELDS = new Set(['nameOf', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
 
@@ -163,10 +214,6 @@ function isValidEnumField(e: Enum, f: string) {
         throw new Error(`Field: '${e.fullName}.${f}' has reserved name`);
     }
 }
-
-const outDir = argv.o;
-const protoFiles = fg((argv._ as string[]).map(s => s.replace(/\\/g, '/')), { absolute: true });
-const namespace = (argv.n || '').replace(/\./g, '\\');
 
 function* pNs(t: ReflectionObject) {
     if (t) {
@@ -178,15 +225,20 @@ function* pNs(t: ReflectionObject) {
 }
 
 function trNs(t: Type | Enum) {
-    return Array.from(pNs(t.parent)).filter(Boolean).join('\\');
+    let n = Array.from(pNs(t.parent)).filter(Boolean).join('\\');
+    return n ? `\\${n}\\` : '';
 }
 
 function trName(t: Type | Enum) {
-    return trNs(t) + '\\' + t.name;
+    return trNs(t) + t.name;
+}
+
+function trimSlashes(s: string) {
+    return s.replace(/^[\s\\]+/g, '').replace(/[\s\\]+$/g, '');
 }
 
 function wrapNS(t: Type | Enum, code: string) {
-    return argv.s ? code : `namespace ${namespace || trNs(t)} {
+    return argv.s ? code : `namespace ${namespace || trimSlashes(trNs(t))} {
 ${code}
 }`;
 }
@@ -198,9 +250,15 @@ for (let proto of protoFiles) {
     let t: Type | Enum;
     for (t of collectTypes(parse(readFileSync(proto, 'utf8'), { keepCase: true }).root)) {
         if (t instanceof Enum) {
-            enums[trName(t)] = t;
+            const name = trName(t);
+            Serializers[name] = Serializers.uint32;
+            Parsers[name] = Parsers.uint32;
+            enums[name] = t;
         } else if (t instanceof Type) {
-            types[trName(t)] = t;
+            const name = trName(t);
+            Serializers[name] = customSerializer;
+            Parsers[name] = customParser.bind(name);
+            types[name] = t;
         }
     }
 }
@@ -218,7 +276,7 @@ ${Object.keys(t.values).reduce((acc, k) => (isValidEnumField(t, k), acc.concat(s
          * @param  int $v
          * @return string
          */
-        public function ${fnDecl(new Field('nameOf', 0, 'uint32'))}
+        public static function ${fnDecl(new Field('nameOf', 0, 'uint32'))}
         {
             switch ($v) {
 ${Object.keys(t.values).map(k => `                case ${t.values[k]}: return '${k}';`).join('\n')}
@@ -246,12 +304,12 @@ for (let fullName in types) {
         if (RESERVED_SERIALIZER_FIELDS.has(f.name)) {
             throw new Error(`Field: '${f.fullName}' has reserved name`);
         }
+        if (!(f.type in TypesDefault)) {
+            //todo better type resolve
+            f.type = ns + f.type;
+        }
         if (!(f.type in Serializers)) {
-            if (ns + '\\' + f.type in enums) {
-                f.type = 'uint32';
-            } else {
-                throw new Error(`Unsupported type ${f.type} on ${f.fullName}`);
-            }
+            throw new Error(`Unsupported type ${f.type} on ${f.fullName}`);
         }
         return stringToJsdoc((f.comment || '') + `
 
@@ -301,7 +359,7 @@ ${serializerProps.join('\n')}
 
     const mainClass = wrapNS(t, `
 ${t.comment ? stringToJsdoc(t.comment, '    ') : ''}
-    final class ${t.name}
+    class ${t.name}
     {
 ${fields.map(formatClassField).join('\n')}
 
@@ -310,7 +368,7 @@ ${fields.map(formatClassField).join('\n')}
         /**
          * @param string $data
          */
-        public function __construct($data = null)
+        public function __construct(${argv.php5 ? '$data = null' : 'string $data = null'})
         {
             if ($data) {
                 $size   = strlen($data);

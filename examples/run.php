@@ -6,9 +6,13 @@ ini_set('display_errors', '1');
 require_once 'AwesomeMessageSerializer.php';
 require_once 'AwesomeMessage.php';
 require_once 'AwesomeEnum.php';
+require_once 'CustomMessage.php';
+require_once 'CustomMessageSerializer.php';
 
 use AwesomePackage\AwesomeEnum;
+use AwesomePackage\CustomMessage;
 use awesomepackage\AwesomeMessage;
+use AwesomePackage\CustomMessageSerializer;
 use awesomepackage\AwesomeMessageSerializer;
 
 $s = AwesomeMessageSerializer::create()
@@ -32,6 +36,10 @@ $s = AwesomeMessageSerializer::create()
     ->r_enum_empty(array())
     ->r_bt(explode(' ', 'В лесу родилась ёлочка, В лесу она росла. Зимой и летом стройная, Зелёная была.'))
     ->r_bt_empty(array())
+    ->custom(new CustomMessage(CustomMessageSerializer::create()->test('привет')->dump()))
+    ->custom_empty(null)
+    ->r_custom(array(new CustomMessage(), new CustomMessage()))
+    ->r_custom_empty(array())
     ->dump();
 
 var_dump($s);
