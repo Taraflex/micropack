@@ -372,7 +372,7 @@ ${fields.map(formatClassField).join('\n')}
         {
             if ($data) {
                 $end = $offset + $size;
-                while ($offset < $end && $id = ord($data[$offset])) {
+                while ($offset < $end && $id = ord(@$data[$offset])) {
                     $offset = $this->__parse($data, $offset + 1, $id);
                 }
             }
