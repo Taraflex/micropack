@@ -35,7 +35,26 @@ namespace AwesomePackage {
                 case 5: return 'PRODUCTS';
                 case 6: return 'VIDEO';
             }
-            return '';
+            return ''; //todo throw Exception
+        }
+
+        /**
+         * @param  string $v
+         * @return int
+         */
+        public static function byName(string $v)
+        {
+            switch ($v) {
+                case 'UNIVERSAL': return 0;
+                case 'WEB': return 1;
+                case 'WEB_ALIAS': return 1;
+                case 'IMAGES': return 2;
+                case 'LOCAL': return 3;
+                case 'NEWS': return 4;
+                case 'PRODUCTS': return 5;
+                case 'VIDEO': return 6;
+            }
+            return 0; //todo throw Exception
         }
     }
 }

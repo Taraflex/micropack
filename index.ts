@@ -205,7 +205,7 @@ function customParser(repeated: boolean) {
 }
 
 const RESERVED_SERIALIZER_FIELDS = new Set(['create', 'dump', 'toArray', '__data', '__parse', '__indices', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
-const RESERVED_ENUM_FIELDS = new Set(['nameOf', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
+const RESERVED_ENUM_FIELDS = new Set(['nameOf', 'byName', '__construct', '__destruct', '__call', '__callStatic', '__get', '__set', '__isset', '__unset', '__sleep', '__wakeup', '__toString', '__invoke', '__set_state', '__clone', '__debugInfo']);
 
 function isValidEnumField(e: Enum, f: string) {
     if (RESERVED_ENUM_FIELDS.has(f)) {
@@ -279,7 +279,19 @@ ${Object.keys(t.values).reduce((acc, k) => (isValidEnumField(t, k), acc.concat(s
             switch ($v) {
 ${Object.keys(t.values).map(k => `                case ${t.values[k]}: return '${k}';`).join('\n')}
             }
-            return '';
+            return ''; //todo throw Exception
+        }
+
+        /**
+         * @param  string $v
+         * @return int
+         */
+        public static function ${fnDecl(new Field('byName', 0, 'string'))}
+        {
+            switch ($v) {
+${Object.keys(t.values).map(k => `                case '${k}': return ${t.values[k]};`).join('\n')}
+            }
+            return 0; //todo throw Exception
         }
     }`);
         if (outDir) {
